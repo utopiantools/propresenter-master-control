@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "prompt": "^1.1.0",
+    "propresenter": "https://github.com/utopiantools/node-propresenter",
     "ws": "^7.4.2"
   }
 }

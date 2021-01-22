@@ -9,34 +9,94 @@
 const config = require( "./config.js" );
 
 // modules
-const { ProController } = require( "./modules/pro.js" );
+const { ProControlClient } = require( "propresenter" );
+
+// prepare to get user input
+const prompt = require( 'prompt' );
 
 let masterPC, slavePC;
+let slavePlaylistPath = '';
+let slavePlaylistName = '';
+let starting = true;
+let pauseOutput = false;
 
-slavePC = new ProController(
+async function selectPlaylist( playlists ) {
+	if ( playlists ) {
+		console.log( '-- SELECT THE SLAVE PLAYLIST TO CONTROL --' );
+		let selected = '';
+		let selectedPath = [];
+
+		prompt.start();
+		prompt.message = 'Select a playlist';
+
+		while ( true ) {
+			// output only one layer of playlist items
+			let index = 1;
+			for ( let item of playlists ) {
+				console.log( `${index++}. ${item.playlistName}` )
+			}
+			console.log( '===============================' );
+			let answer = await prompt.get( [ 'number' ] );
+			if ( answer == '' ) return '';
+			index = parseInt( answer.number ) - 1;
+			selected = playlists[ index ];
+			selectedPath.push( selected.playlistName );
+			if ( selected.playlistType == 'playlistTypePlaylist' ) {
+				slavePlaylistName = selectedPath.join( '/' );
+				console.log( `SLAVE PLAYLIST SET TO: ${slavePlaylistName}` );
+				return selected.playlistLocation;
+			} else {
+				playlists = selected.playlist;
+			}
+		}
+	}
+}
+
+function print( s ) {
+	if ( pauseOutput ) return;
+	console.log( s );
+}
+
+slavePC = new ProControlClient(
 	config.slave.host,
 	config.slave.control.password,
-	config.slave.control.protocol,
 	{
-		onupdate: ( data, pro6c ) => {
-			console.log( "--------- SLAVE PRO6 CONTROL UPDATE -------------" );
-			console.log( data );
+		version: config.slave.version,
+		onupdate: async ( data, procc ) => {
+			// print( "--------- SLAVE CONTROL UPDATE -------------" );
+			// print(data);
+			if ( data.action == 'playlistRequestAll' && starting ) {
+				if ( procc.playlists && procc.playlists.length > 1 ) {
+					pauseOutput = true;
+					slavePlaylistPath = await selectPlaylist( procc.playlists );
+					pauseOutput = false;
+				}
+				starting == false;
+			}
 		}
 	} );
 
-masterPC = new ProController(
+masterPC = new ProControlClient(
 	config.master.host,
 	config.master.control.password,
-	config.master.control.protocol,
 	{
+		version: config.master.version,
 		ondata: ( data ) => {
-			console.log( "--------- MASTER PRO7 CONTROL DATA -------------" );
-			console.log( data );
 
 			switch ( data.action ) {
 				case 'presentationTriggerIndex':
+					print( "--------- MASTER CONTROL DATA -------------" );
+					print( data );
 					// pro7 needs the request to only be strings for some reason
 					data.slideIndex = data.slideIndex.toString();
+
+					// if we are specifying a custom target playlist use it here
+					if ( slavePlaylistPath != '' ) {
+						let presentationIndex = data.presentationPath.split( ':' ).slice( -1 );
+						data.presentationPath = `${slavePlaylistPath}:${presentationIndex}`
+					};
+					print( `sending to slave playlist: ${slavePlaylistName}` )
+					print( data );
 					if ( slavePC.connected ) slavePC.send( data );
 					break;
 
@@ -44,19 +104,6 @@ masterPC = new ProController(
 					return;
 			}
 		},
-		// onupdate: ( data, pro6c ) => {
-		// 	console.log( "--------- MASTER PRO6 CONTROL UPDATE -------------" );
-		// 	console.log( data );
-		// 	switch ( data.action ) {
-		// 		case 'presentationCurrent':
-		// 			slavePC.getPresentation( data.presentationName );
-		// 			break;
-		// 		case 'presentationTriggerIndex':
-		// 			slavePC.triggerSlide( data.slideIndex, data.presentationPath );
-		// 			break;
-		// 	}
-		// 	// console.log( pro6c.status );
-		// }
 	} );
 
 console.log( 'STARTING...' );
