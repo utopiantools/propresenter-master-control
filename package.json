@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "prompt": "^1.1.0",
-    "propresenter": "https://github.com/utopiantools/node-propresenter",
+    "@utopian/propresenter": "^0.0.1",
     "ws": "^7.4.2"
   }
 }
