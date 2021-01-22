@@ -22,7 +22,9 @@ let pauseOutput = false;
 
 async function selectPlaylist( playlists ) {
 	if ( playlists ) {
-		console.log( '-- SELECT THE SLAVE PLAYLIST TO CONTROL --' );
+		console.log( '\n\n-- SELECT THE SLAVE PLAYLIST TO CONTROL --' );
+		console.log( 'If blank, the master will control slave playlists based on playlist location.' );
+		console.log( '' );
 		let selected = '';
 		let selectedPath = [];
 
@@ -37,7 +39,12 @@ async function selectPlaylist( playlists ) {
 			}
 			console.log( '===============================' );
 			let answer = await prompt.get( [ 'number' ] );
-			if ( answer == '' ) return '';
+			if ( answer.number == '' ) {
+				console.log( 'nothing selected' );
+				console.log( 'master will control matching playlists' )
+				return '';
+			}
+
 			index = parseInt( answer.number ) - 1;
 			selected = playlists[ index ];
 			selectedPath.push( selected.playlistName );

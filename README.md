@@ -25,7 +25,7 @@ Master control depends on the two instances sharing the same `presentationPath` 
 
 These presentation paths must match between the master and the slave.
 
-Therefore, to make the master and slave configurations work seamlessly, make sure the master and slave have matching playlists at matching locations in their playlist windows. The easiest way to do that is to drag the relevant playlists to the top of the playlist window.
+However, when the app starts, it will prompt you to select a presentation on the slave instance that will be controlled by the master instance. If you leave it blank, the master will control any slave playlist that matches the `playlistPath` on the master. If you select a playlist at the prompt, all master selections will be routed to that playlist, and to select a different slave playlist, you will need to restart the app.
 
 ## Using the App
 
@@ -35,4 +35,6 @@ To run the app, open up a terminal / command window in the folder where this cod
 node app.js
 ```
 
-That's it, whenever a slide is selected in the master instance, a command will be sent to the slave to trigger a slide at the same slide number in the same playlist path.
+The app will prompt you to select a playlist on the slave machine that will be controlled by the playlist on the master machine. You can leave it blank to allow the master to control any playlist on the slave according to the playlist location of the master.
+
+That's it, whenever a slide is selected in the master instance, a command will be sent to the slave to trigger a slide at the same slide number in the selected playlist path.
